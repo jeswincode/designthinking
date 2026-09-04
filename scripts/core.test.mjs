@@ -1,0 +1,9 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {seed,validWorkspace,makeRecord,conflicts,freeSlot,day,template,orderTasks} from '../lib/workspace.ts';
+test('seed is a valid workspace with connected tasks, events and records',()=>{const w=seed();assert.ok(validWorkspace(w));assert.equal(new Set(w.records.map(r=>r.id)).size,w.records.length);assert.equal(w.records.filter(r=>r.kind==='event'&&r.date===day()).length,3)});
+test('calendar rejects overlap and accepts adjacent events',()=>{const a=makeRecord('event','Lecture',{time:'10:00',end:'11:00'});assert.equal(conflicts(makeRecord('event','Overlap',{time:'10:30',end:'11:30'}),[a]).length,1);assert.equal(conflicts(makeRecord('event','Adjacent',{time:'11:00',end:'12:00'}),[a]).length,0);assert.equal(conflicts({...a},[a]).length,0)});
+test('focus planning finds an actual free block and handles a full day',()=>{const w=seed();const s=freeSlot(w.records);assert.ok(s);assert.equal(conflicts(makeRecord('event','Focus',s),w.records).length,0);assert.equal(freeSlot([makeRecord('event','Full day',{time:'09:00',end:'17:00'})]),null)});
+test('backup validation rejects malformed records and restores serialized data',()=>{assert.ok(validWorkspace(JSON.parse(JSON.stringify(seed()))));assert.equal(validWorkspace({version:1,records:[{title:'broken'}]}),false);assert.equal(validWorkspace(null),false)});
+test('task ordering keeps completed tasks after pending ones',()=>{const done=makeRecord('task','Done',{done:true,date:day(-2)});const pending=makeRecord('task','Pending',{date:day(1)});assert.equal(orderTasks([done,pending])[0].title,'Pending')});
+test('offline drafts stay editable and contain the requested topic',()=>{for(const type of ['Lesson plan','Quiz outline','Report','Meeting minutes','Email reply'])assert.ok(template(type,'DBMS').includes('DBMS'))});
