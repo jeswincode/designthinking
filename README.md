@@ -1,13 +1,32 @@
-# Faculty AI Workspace
+# Faculty Workspace
 
-An offline-first faculty workspace, built from the supplied specification. It includes tasks, recurring task follow-ups, calendar views and conflict detection, research notes, teaching and administrative templates, student mentoring, documents, manually saved email, reminders, workload charts, search and profile settings.
+Standalone React + TypeScript/Vite with a Node backend, MongoDB account persistence, optional Gemini generation, and a separate offline workspace. No OpenAI Sites required.
 
-Records are device-local in browser storage. Uploaded files are stored as blobs in IndexedDB. Backup export includes both; import adds records without deleting existing work. Sample records are fictional and can be cleared from Settings.
+## Start locally
 
-The assistant uses explicit offline rules for briefings, keyword lookup, task creation and finding open research time. Templates are not represented as live AI output. Live AI, cloud sync, institutional authentication and external integrations are future features, per the user's request.
+```sh
+npm install
+npm run setup
+```
 
-`npm run dev` opens the development server. `npm run build` builds the Worker and an offline cache manifest. `node --test scripts/core.test.mjs` checks the domain logic.
+For your installed MongoDB Community, keep its Windows service running and set `USE_LOCAL_MONGODB=true` in `.env` (port 27017 by default). Run `npm run db:check`, then `npm run dev:full` and open Vite's local URL. Create an account to use MongoDB autosave. To use an alternate connection string, set `USE_LOCAL_MONGODB=false` and set `MONGODB_URI`. Restart Node after changing the toggle. See the setup reference for custom ports and the optional bundled MongoDB launcher.
 
-Offline use requires an initial online visit and successful service worker activation. The installed app caches the shell and assets; user records are never sent to a server. Browser data removal deletes local work, so export backups regularly. Device privacy is the user's responsibility; this build does not implement local accounts or roles.
+For Gemini, set `GEMINI_ENABLED=true` and `GEMINI_API_KEY` in the server `.env`. The default model is `gemini-2.5-flash-lite`, with conservative request budgets. Live generation is an explicit action in the AI Assistant. No API key is needed for local templates or offline tools.
 
-WebMCP exposes keyword search and task creation where the browser supports it. Browser-level WebMCP execution has not been verified in this environment. No browser UI testing was requested.
+## Reference
+
+Read [reference/README.md](reference/README.md) for the full feature inventory, setup, architecture, authentication, MongoDB, Gemini free-tier guidance, API and troubleshooting.
+
+## Build and test
+
+```sh
+npm test
+npm run test:db
+npm run build
+npm run test:e2e
+npm start
+```
+
+`npm start` serves the production React build and backend on port 8787. `npm run preview` serves only the static app. Account features require MongoDB and the Node API. Use HTTPS, secure cookies and restricted origins for production.
+
+Academic records are cached on the device and autosaved to the authenticated user's MongoDB workspace; files use IndexedDB and GridFS. Export backups in Settings. Offline mode uses a separate cache and is not silently uploaded when you create an account. Live AI and database credentials stay in the backend `.env`.

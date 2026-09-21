@@ -1,11 +1,12 @@
 import {readdir,readFile,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import path from 'node:path';
-const root='dist/client';
+const root='dist';
 const files=await readdir(root,{recursive:true,withFileTypes:true});
-const assets=files.filter(f=>f.isFile()&&/\.(js|css|svg|woff2?|png|ico)$/.test(f.name)&&!['sw.js','offline-assets.js'].includes(f.name)).map(f=>'/'+path.relative(root,path.join(f.parentPath,f.name)).replaceAll('\\','/')).sort();
+const assets=files.filter(f=>f.isFile()&&/\.(html|js|css|svg|woff2?|png|ico)$/.test(f.name)&&!['sw.js','offline-assets.js'].includes(f.name)).map(f=>path.relative(root,path.join(f.parentPath,f.name)).replaceAll('\\','/')).sort();
 const hash=createHash('sha256');
-for(const asset of assets)hash.update(await readFile(root+asset));
+for(const asset of assets)hash.update(await readFile(path.join(root,asset)));
+hash.update(await readFile(path.join(root,'sw.js')));
 const version=hash.digest('hex').slice(0,12);
 await writeFile(root+'/offline-assets.js',`self.FACULTY_BUILD=${JSON.stringify(version)};\nself.FACULTY_ASSETS=${JSON.stringify(assets)};\n`);
 console.log(`Offline shell prepared: ${assets.length} assets.`);

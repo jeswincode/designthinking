@@ -1,0 +1,14 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtemp,rm,readFile} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import path from 'node:path';
+import {readConfig} from '../config.mjs';
+import {createGemini} from '../gemini.mjs';
+async function setup(t,extra={}){const dir=await mkdtemp(path.join(tmpdir(),'faculty-ai-test-'));t.after(()=>rm(dir,{recursive:true,force:true}));return {...readConfig({GEMINI_ENABLED:'true',GEMINI_API_KEY:'fake-unit-test-key'}),usageFile:path.join(dir,'usage.json'),...extra};}
+const payload={prompt:'Prepare a DBMS lesson plan',context:''};
+const success=()=>new Response(JSON.stringify({candidates:[{finishReason:'STOP',content:{parts:[{text:'A lesson draft'}]}}]}));
+test('Gemini uses a server key and caches identical requests without consuming budget twice',async t=>{const config=await setup(t);let calls=0;const gemini=createGemini(config,{fetchImpl:async(url,options)=>{calls++;assert.match(url,/gemini-2\.5-flash-lite:generateContent$/);assert.equal(options.headers['x-goog-api-key'],'fake-unit-test-key');assert.equal(JSON.parse(options.body).generationConfig.maxOutputTokens,1024);return success();}});assert.equal((await gemini.generate(payload)).text,'A lesson draft');assert.equal((await gemini.generate(payload)).cached,true);assert.equal(calls,1);assert.equal(JSON.parse(await readFile(config.usageFile)).count,1);});
+test('request budget survives recreation and never retries quota failures',async t=>{const config=await setup(t,{rpd:1});let calls=0;const upstream=async()=>{calls++;return new Response('{}',{status:429});};await assert.rejects(createGemini(config,{fetchImpl:upstream}).generate(payload),e=>e.code==='GEMINI_QUOTA');await assert.rejects(createGemini(config,{fetchImpl:upstream}).generate({...payload,prompt:'Another draft'}),e=>e.code==='LOCAL_DAILY_LIMIT');assert.equal(calls,1);});
+test('missing keys and oversized prompts make no external calls',async t=>{const config=await setup(t);let calls=0;const fetchImpl=async()=>{calls++;return success();};await assert.rejects(createGemini({...config,geminiKey:''},{fetchImpl}).generate(payload),e=>e.code==='NOT_CONFIGURED');await assert.rejects(createGemini(config,{fetchImpl}).generate({...payload,context:'x'.repeat(12001)}),e=>e.code==='INVALID_PROMPT');assert.equal(calls,0);});
+test('blocked and authentication failures give safe, useful errors',async t=>{const config=await setup(t);await assert.rejects(createGemini(config,{fetchImpl:async()=>new Response('{}',{status:403})}).generate(payload),e=>e.code==='GEMINI_AUTH'&&!e.message.includes(config.geminiKey));await assert.rejects(createGemini(config,{fetchImpl:async()=>new Response(JSON.stringify({promptFeedback:{blockReason:'SAFETY'}}))}).generate(payload),e=>e.code==='GEMINI_EMPTY');});
