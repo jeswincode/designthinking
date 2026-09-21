@@ -11,7 +11,7 @@
     "postbuild": "node scripts/offline-build.mjs",
     "preview": "vite preview",
     "start": "node --experimental-strip-types --env-file-if-exists=.env server/index.mjs",
-    "test": "node --experimental-strip-types --test scripts/*.test.mjs server/tests/api.test.mjs server/tests/gemini.test.mjs",
+    "test": "node --experimental-strip-types --test scripts/*.test.mjs server/tests/api.test.mjs server/tests/gemini.test.mjs server/tests/google-calendar.test.mjs",
     "lint": "oxlint",
     "format": "oxfmt",
     "server": "node --experimental-strip-types --env-file-if-exists=.env server/index.mjs",
@@ -39,7 +39,7 @@
     "react": "19.2.6",
     "react-day-picker": "9.8.1",
     "react-dom": "19.2.6",
-    "react-resizable-panels": "4.5.8",
+    "react-resizable-panels": "4.5.0",
     "recharts": "3.8.0",
     "shadcn": "4.18.0",
     "tailwind-merge": "3.6.0",
@@ -64,7 +64,7 @@
   "description": "Standalone React + TypeScript/Vite with a Node backend, MongoDB account persistence, optional Gemini generation, and a separate offline workspace. No OpenAI Sites required.",
   "main": "index.js",
   "directories": {
-    "lib": "lib"
+    "lib": "libraries"
   },
   "keywords": [],
   "author": "",
