@@ -19,8 +19,8 @@ test('Google event mapping preserves Faculty metadata and converts times',()=>{
  assert.equal(mapped.end,'16:00');
  assert.equal(mapped.done,true);
  assert.equal(mapped.priority,'High');
- assert.match(mapped.tags,'Teaching');
- assert.match(mapped.tags,'Google Calendar');
+ assert.ok(mapped.tags.includes('Teaching'));
+ assert.ok(mapped.tags.includes('Google Calendar'));
  assert.equal(mapped.readOnly,true);
 });
 
