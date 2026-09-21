@@ -7,7 +7,6 @@ const API_URL='https://www.googleapis.com/calendar/v3';
 const REVOKE_URL='https://oauth2.googleapis.com/revoke';
 const SCOPE='https://www.googleapis.com/auth/calendar.readonly';
 const STATE_TTL=10*60*1000;
-
 const b64=value=>Buffer.from(value).toString('base64url');
 const unb64=value=>Buffer.from(value,'base64url');
 const keyOf=config=>{if(!config.googleTokenEncryptionKey)return null;const key=Buffer.from(config.googleTokenEncryptionKey,'hex');return key.length===32?key:null;};
